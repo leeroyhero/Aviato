@@ -36,6 +36,13 @@ class MainActivity : AppCompatActivity() {
         secondAirport=AirportItem("Барселона, Испания", "Испания", "BCN", LatLng(41.387089, 2.170066))
 
         fillAirportsViews()
+
+        buttonSearch.setOnClickListener {
+            val intent=Intent(this, SearchFlightsActivity::class.java)
+            intent.putExtra("first_airport", firstAirport)
+            intent.putExtra("second_airport", secondAirport)
+            startActivity(intent)
+        }
     }
 
     private fun fillAirportsViews() {
