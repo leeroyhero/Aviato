@@ -94,11 +94,16 @@ class SearchDestinationActivity : AppCompatActivity() {
 
             var fullname = item.getString("fullname")
             var country = item.getString("country")
-            var iata = item.getJSONArray("iata").get(0) as String
-            var latLng =
-                LatLng(item.getJSONObject("location").getDouble("lat"), item.getJSONObject("location").getDouble("lon"))
+            if (item.getJSONArray("iata").length()>0) {
+                var iata = item.getJSONArray("iata").get(0) as String
+                var latLng =
+                    LatLng(
+                        item.getJSONObject("location").getDouble("lat"),
+                        item.getJSONObject("location").getDouble("lon")
+                    )
 
-            airportList.add(AirportItem(fullname, country, iata, latLng))
+                airportList.add(AirportItem(fullname, country, iata, latLng))
+            }
         }
 
         if (airportList.size>0)
