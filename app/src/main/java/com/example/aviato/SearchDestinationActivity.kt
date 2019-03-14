@@ -37,7 +37,7 @@ class SearchDestinationActivity : AppCompatActivity() {
         backButton.setOnClickListener { finish() }
 
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter= AirportRecyclerAdapter(ArrayList(), this)
+        adapter= AirportRecyclerAdapter(ArrayList(), this, intent.getIntExtra("destination",1111))
         recyclerView.adapter=adapter
 
         editText.addTextChangedListener(object : TextWatcher {
