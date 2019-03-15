@@ -20,29 +20,23 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import java.util.*
 import android.R.color
+import android.os.Handler
+import com.example.aviato.R
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.PatternItem
 import java.util.Arrays.asList
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.maps.android.SphericalUtil
+import java.util.Arrays.asList
 
 
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- *
- */
 class PlaneFragment : Fragment(), OnMapReadyCallback {
     private lateinit var firstAirport: AirportItem
     private lateinit var secondAirport: AirportItem
-    val STEP=0.01f
-    val PLANE_SPEED=50
+    val STEP = 0.01f
+    val PLANE_SPEED = 50
 
 
     override fun onCreateView(
@@ -79,9 +73,10 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         setAirportNameMarker(googleMap, firstAirport)
         setAirportNameMarker(googleMap, secondAirport)
 
-        var route=getRoute()
+        var route = getRoute2()
 
         drawLine(googleMap, route)
+        startPlane(route, googleMap)
 
     }
 
@@ -103,21 +98,65 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
 
     }
 
+    private fun getRoute2(): ArrayList<RouteItem> {
+        val list = java.util.ArrayList<RouteItem>()
+
+        val startLatLang = firstAirport.latLng
+        val endLatLang = secondAirport.latLng
+
+
+        val length = Math.sqrt(
+            Math.pow(
+                startLatLang.latitude - endLatLang.latitude, 2.0
+            ) + Math.pow(startLatLang.longitude - endLatLang.longitude, 2.0)
+        )
+        // val angle = 0.0
+
+        var latStep = endLatLang.latitude - startLatLang.latitude
+        var lonStep = endLatLang.longitude - startLatLang.longitude
+        val dist = Math.abs(latStep) + Math.abs(lonStep)
+        latStep = latStep / dist
+        lonStep = lonStep / dist
+
+
+        list.add(RouteItem(startLatLang, 0.0))
+        while (true) {
+            var lat = list.get(list.size - 1).latLng.latitude + latStep
+            var lon = list.get(list.size - 1).latLng.longitude + lonStep
+
+
+            if (latStep < 0 && lat < endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
+            if (latStep > 0 && lat > endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
+            if (latStep < 0 && lat < endLatLang.latitude && lonStep > 0 && lon > endLatLang.longitude) break
+            if (latStep > 0 && lat > endLatLang.latitude && lonStep > 0 && lon > endLatLang.longitude) break
+
+            list.add(RouteItem(LatLng(lat, lon), 0.0))
+        }
+
+        for (i in 1 until list.size - 2) {
+            val pathItem = list[i]
+            pathItem.angle = (getAngleDegrees(list[i - 1].latLng, list[i + 1].latLng))
+        }
+        return list
+    }
+
     private fun getRoute(): ArrayList<RouteItem> {
         val list = java.util.ArrayList<RouteItem>()
 
-        val startLatLang=firstAirport.latLng
-        val endLatLang=secondAirport.latLng
+        val startLatLang = firstAirport.latLng
+        val endLatLang = secondAirport.latLng
 
-        val length = Math.sqrt(Math.pow(startLatLang.latitude - endLatLang.latitude, 2.0
-            ) + Math.pow(startLatLang.longitude - endLatLang.longitude, 2.0))
-       // val angle = 0.0
+        val length = Math.sqrt(
+            Math.pow(
+                startLatLang.latitude - endLatLang.latitude, 2.0
+            ) + Math.pow(startLatLang.longitude - endLatLang.longitude, 2.0)
+        )
+        // val angle = 0.0
 
         val angle = getAngle(startLatLang, endLatLang)
 
         val sin = Math.sin(angle)
         val cos = Math.cos(angle)
-
 
         list.add(RouteItem(startLatLang, 0.0))
         run {
@@ -139,39 +178,60 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
 
         for (i in 1 until list.size - 2) {
             val pathItem = list[i]
-            pathItem.angle=(getAngleDegrees(list[i - 1].latLng, list[i + 1].latLng))
+            pathItem.angle = (getAngleDegrees(list[i - 1].latLng, list[i + 1].latLng))
         }
-
         return list
+    }
+
+    private fun startPlane(path: ArrayList<RouteItem>, googleMap: GoogleMap?) {
+        val plane = googleMap?.addMarker(
+            MarkerOptions()
+                .position(path[0].latLng)
+                .rotation(path[0].angle.toFloat())
+                .anchor(0.7f, 0.5f)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_plane))
+        )
+
+        val pos = intArrayOf(1)
+        val handler = Handler()
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                pos[0]++
+                plane?.setPosition(path[pos[0]].latLng)
+                plane?.rotation = path[pos[0]].angle.toFloat()
+                if (pos[0] < path.size - 3)
+                    handler.postDelayed(this, PLANE_SPEED.toLong())
+            }
+        }, PLANE_SPEED.toLong())
     }
 
     private fun getAngle(startLatLang: LatLng, endLatLang: LatLng): Double {
         return ((endLatLang.latitude - startLatLang.latitude) / (endLatLang.longitude - startLatLang.longitude))
-      //  return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude))
+        //  return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude))
     }
 
     private fun getAngleDegrees(startLatLang: LatLng, endLatLang: LatLng): Double {
-         if (startLatLang.longitude > endLatLang.longitude)
-             return     ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1 + 180
+        if (startLatLang.longitude > endLatLang.longitude)
+            return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1 + 180
         else
-        return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1
+            return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1
         // return (float) Math.tan(((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude))/(Math.PI*180));
     }
 
     private fun setAirportNameMarker(googleMap: GoogleMap?, airport: AirportItem) {
-        val view=LayoutInflater.from(context).inflate(R.layout.airport_map_marker, null)
-        view.findViewById<TextView>(R.id.textViewIata).text=airport.iata
-     /*   val layoutParams=ConstraintLayout.LayoutParams(30,30)
-        view.layoutParams=layoutParams*/
+        val view = LayoutInflater.from(context).inflate(R.layout.airport_map_marker, null)
+        view.findViewById<TextView>(R.id.textViewIata).text = airport.iata
+        /*   val layoutParams=ConstraintLayout.LayoutParams(30,30)
+           view.layoutParams=layoutParams*/
         view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-        view.layout(0,0, view.measuredWidth, view.measuredHeight)
+        view.layout(0, 0, view.measuredWidth, view.measuredHeight)
         view.buildLayer()
 
-        val bitmap=Bitmap.createBitmap(view.measuredWidth, view.measuredHeight, Bitmap.Config.ARGB_8888)
-        val canvas=Canvas(bitmap)
+        val bitmap = Bitmap.createBitmap(view.measuredWidth, view.measuredHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN)
-        val drawableBackground=view.background
-        if (drawableBackground!=null)
+        val drawableBackground = view.background
+        if (drawableBackground != null)
             drawableBackground.draw(canvas)
 
         view.draw(canvas)
@@ -181,9 +241,8 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
             .anchor(0.5f, 0.5f)
             .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
 
-        val marker= googleMap?.addMarker(options)
+        val marker = googleMap?.addMarker(options)
     }
-
 
 
 }
