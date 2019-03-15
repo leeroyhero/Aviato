@@ -30,13 +30,15 @@ import java.util.Arrays.asList
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.maps.android.SphericalUtil
 import java.util.Arrays.asList
+import kotlin.math.PI
+import kotlin.math.sin
 
 
 class PlaneFragment : Fragment(), OnMapReadyCallback {
     private lateinit var firstAirport: AirportItem
     private lateinit var secondAirport: AirportItem
     val STEP = 0.01f
-    val PLANE_SPEED = 50
+    val PLANE_SPEED = 70
 
 
     override fun onCreateView(
@@ -114,16 +116,20 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
 
         var latStep = endLatLang.latitude - startLatLang.latitude
         var lonStep = endLatLang.longitude - startLatLang.longitude
-        val dist = Math.abs(latStep) + Math.abs(lonStep)
+        val dist = ((Math.abs(latStep) + Math.abs(lonStep))*5).toInt()
         latStep = latStep / dist
         lonStep = lonStep / dist
 
+        Log.d("plane_fr", "start: "+startLatLang+" end: "+endLatLang)
+        Log.d("plane_fr", "dist: "+dist)
+
 
         list.add(RouteItem(startLatLang, 0.0))
-        while (true) {
-            var lat = list.get(list.size - 1).latLng.latitude + latStep
-            var lon = list.get(list.size - 1).latLng.longitude + lonStep
+        for (i in 0..dist){
+            var lat = startLatLang.latitude+ latStep*i + 3*sin((2*i* PI)/dist)
+            var lon = startLatLang.longitude + lonStep*i -3*sin((2*i* PI)/dist)
 
+            Log.d("plane_fr", "lat: "+lat+" lon: "+lon)
 
             if (latStep < 0 && lat < endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
             if (latStep > 0 && lat > endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
