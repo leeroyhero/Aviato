@@ -43,7 +43,7 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d("plane_fr", "savedInstanceState: "+savedInstanceState)
+        //retrieve plane destination
         if (savedInstanceState!=null)
             planePosition=savedInstanceState.getInt("pos")
         else planePosition=0
@@ -53,8 +53,6 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-
         firstAirport = arguments?.getParcelable("first_airport") as AirportItem
         secondAirport = arguments?.getParcelable("second_airport") as AirportItem
         return inflater.inflate(R.layout.fragment_plane, container, false)
@@ -80,6 +78,7 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         setAirportNameMarker(googleMap, firstAirport)
         setAirportNameMarker(googleMap, secondAirport)
 
+        //route for line and plane
         var route = getRoute2()
 
         drawLine(googleMap, route)
@@ -96,14 +95,11 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
 
         val polylineOptions = PolylineOptions()
             .addAll(line)
-
             .geodesic(false)
             .width(10f)
             .color(resources.getColor(R.color.colorPrimary))
         val polyline = googleMap?.addPolyline(polylineOptions)
         polyline?.pattern = Arrays.asList(Dot(), Gap(20f));
-
-        polyline?.jointType = JointType.DEFAULT
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -117,6 +113,7 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         val startLatLang = firstAirport.latLng
         val endLatLang = secondAirport.latLng
 
+        //distances between two points
         var latStep = endLatLang.latitude - startLatLang.latitude
         var lonStep = endLatLang.longitude - startLatLang.longitude
         val dist = ((Math.abs(latStep) + Math.abs(lonStep))*6).toInt()
@@ -124,7 +121,9 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         lonStep = lonStep / dist
 
         list.add(RouteItem(startLatLang, 0.0))
+
         for (i in 0..dist) {
+            //coordinates of the next point with sin
             var lat = startLatLang.latitude + latStep * i + 3 * sin((2 * i * PI) / dist)
             var lon = startLatLang.longitude + lonStep * i - 3 * sin((2 * i * PI) / dist)
 
@@ -136,6 +135,7 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
             list.add(RouteItem(LatLng(lat, lon), 0.0))
         }
 
+        //angles for plane
         for (i in 1 until list.size - 2) {
             val pathItem = list[i]
             pathItem.angle = (getAngleDegrees(list[i].latLng, list[i+1].latLng))

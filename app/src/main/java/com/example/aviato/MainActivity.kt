@@ -18,6 +18,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var firstAirport: AirportItem
     private lateinit var secondAirport: AirportItem
 
+    //ids for activity result
     public val FIRST_DESTINATION = 1111
     public val SECOND_DESTINATION = 2222
     public val REQUEST_CODE = 1234
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         secondDestination = findViewById(R.id.secondDestination)
         buttonSearch = findViewById(R.id.buttonSearch)
 
+        //airport search buttons
         firstDestination.setOnClickListener { v -> openSearchActivity(v.id) }
         secondDestination.setOnClickListener { v -> openSearchActivity(v.id) }
 
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
         fillAirportsViews()
 
+        //next screen
         buttonSearch.setOnClickListener {
             val intent = Intent(this, SearchFlightsActivity::class.java)
             intent.putExtra("first_airport", firstAirport)
