@@ -10,12 +10,14 @@ class SearchFlightsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_flights)
 
-        val arguments= Bundle()
-        arguments.putAll(intent.extras)
-        val planeFragment=PlaneFragment()
-        planeFragment.arguments=arguments
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.contentFragment, planeFragment)
-            .commit()
+        if (savedInstanceState==null) {
+            val arguments = Bundle()
+            arguments.putAll(intent.extras)
+            val planeFragment = PlaneFragment()
+            planeFragment.arguments = arguments
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.contentFragment, planeFragment)
+                .commit()
+        }
     }
 }

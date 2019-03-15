@@ -37,9 +37,17 @@ import kotlin.math.sin
 class PlaneFragment : Fragment(), OnMapReadyCallback {
     private lateinit var firstAirport: AirportItem
     private lateinit var secondAirport: AirportItem
-    val STEP = 0.01f
-    val PLANE_SPEED = 70
+    val PLANE_SPEED = 60
+    private var planePosition=0
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        Log.d("plane_fr", "savedInstanceState: "+savedInstanceState)
+        if (savedInstanceState!=null)
+            planePosition=savedInstanceState.getInt("pos")
+        else planePosition=0
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,8 +68,6 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
-
-
         val builder = LatLngBounds.Builder()
         builder.include(firstAirport.latLng)
         builder.include(secondAirport.latLng)
@@ -71,13 +77,14 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         val cameraUpdate = CameraUpdateFactory.newLatLngBounds(builder.build(), width, height, padding)
         googleMap?.moveCamera(cameraUpdate)
 
-
         setAirportNameMarker(googleMap, firstAirport)
         setAirportNameMarker(googleMap, secondAirport)
 
         var route = getRoute2()
 
         drawLine(googleMap, route)
+
+        Log.d("plane_fr", "start plane")
         startPlane(route, googleMap)
 
     }
@@ -99,35 +106,27 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         polyline?.jointType = JointType.DEFAULT
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt("pos", planePosition)
+        super.onSaveInstanceState(outState)
+    }
+
     private fun getRoute2(): ArrayList<RouteItem> {
         val list = java.util.ArrayList<RouteItem>()
 
         val startLatLang = firstAirport.latLng
         val endLatLang = secondAirport.latLng
 
-        val length = Math.sqrt(
-            Math.pow(
-                startLatLang.latitude - endLatLang.latitude, 2.0
-            ) + Math.pow(startLatLang.longitude - endLatLang.longitude, 2.0)
-        )
-        // val angle = 0.0
-
         var latStep = endLatLang.latitude - startLatLang.latitude
         var lonStep = endLatLang.longitude - startLatLang.longitude
-        val dist = ((Math.abs(latStep) + Math.abs(lonStep))*5).toInt()
+        val dist = ((Math.abs(latStep) + Math.abs(lonStep))*6).toInt()
         latStep = latStep / dist
         lonStep = lonStep / dist
-
-        Log.d("plane_fr", "start: " + startLatLang + " end: " + endLatLang)
-        Log.d("plane_fr", "dist: " + dist)
-
 
         list.add(RouteItem(startLatLang, 0.0))
         for (i in 0..dist) {
             var lat = startLatLang.latitude + latStep * i + 3 * sin((2 * i * PI) / dist)
             var lon = startLatLang.longitude + lonStep * i - 3 * sin((2 * i * PI) / dist)
-
-            Log.d("plane_fr", "i: " + i + " lat: " + lat + " lon: " + lon)
 
             if (latStep < 0 && lat < endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
             if (latStep > 0 && lat > endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
@@ -140,7 +139,6 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         for (i in 1 until list.size - 2) {
             val pathItem = list[i]
             pathItem.angle = (getAngleDegrees(list[i].latLng, list[i+1].latLng))
-            Log.d("plane_fr", "i: " + i + " angle: " + pathItem.angle)
         }
         return list
     }
@@ -155,41 +153,25 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_plane))
         )
 
-        val pos = intArrayOf(1)
         val handler = Handler()
         handler.postDelayed(object : Runnable {
             override fun run() {
-                pos[0]++
-                plane?.setPosition(path[pos[0]].latLng)
-                plane?.rotation = path[pos[0]].angle.toFloat()
-                if (pos[0] < path.size - 3)
+                planePosition++
+                plane?.setPosition(path[planePosition].latLng)
+                plane?.rotation = path[planePosition].angle.toFloat()
+                if (planePosition < path.size - 3)
                     handler.postDelayed(this, PLANE_SPEED.toLong())
             }
         }, PLANE_SPEED.toLong())
     }
 
-    private fun getAngle(startLatLang: LatLng, endLatLang: LatLng): Double {
-        return ((endLatLang.latitude - startLatLang.latitude) / (endLatLang.longitude - startLatLang.longitude))
-        //  return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude))
-    }
-
     private fun getAngleDegrees(startLatLang: LatLng, endLatLang: LatLng): Double {
-
-        Log.d("plane_fr", "start: " + startLatLang + " end: " + endLatLang)
-
-        if (startLatLang.longitude > endLatLang.longitude)
             return Math.atan2(startLatLang.latitude - endLatLang.latitude, startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI) * -1 + 180
-          //  return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1 + 180
-        else
-            return Math.atan2(startLatLang.latitude - endLatLang.latitude, startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI) * -1
-        // return (float) Math.tan(((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude))/(Math.PI*180));
     }
 
     private fun setAirportNameMarker(googleMap: GoogleMap?, airport: AirportItem) {
         val view = LayoutInflater.from(context).inflate(R.layout.airport_map_marker, null)
         view.findViewById<TextView>(R.id.textViewIata).text = airport.iata
-        /*   val layoutParams=ConstraintLayout.LayoutParams(30,30)
-           view.layoutParams=layoutParams*/
         view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         view.layout(0, 0, view.measuredWidth, view.measuredHeight)
         view.buildLayer()

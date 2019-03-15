@@ -3,6 +3,7 @@ package com.example.aviato
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.view.View
 import android.widget.Button
 import com.example.aviato.item.AirportItem
@@ -32,8 +33,13 @@ class MainActivity : AppCompatActivity() {
         firstDestination.setOnClickListener { v -> openSearchActivity(v.id) }
         secondDestination.setOnClickListener { v -> openSearchActivity(v.id) }
 
-        firstAirport = AirportItem("Санкт-Петербург, Россия", "Россия", "LED", LatLng(59.95, 30.316667))
-        secondAirport = AirportItem("Барселона, Испания", "Испания", "BCN", LatLng(41.387089, 2.170066))
+        if (savedInstanceState == null) {
+            firstAirport = AirportItem("Санкт-Петербург, Россия", "Россия", "LED", LatLng(59.95, 30.316667))
+            secondAirport = AirportItem("Барселона, Испания", "Испания", "BCN", LatLng(41.387089, 2.170066))
+        } else {
+            firstAirport = savedInstanceState.getParcelable("first")
+            secondAirport = savedInstanceState.getParcelable("second")
+        }
 
         fillAirportsViews()
 
@@ -43,6 +49,12 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("second_airport", secondAirport)
             startActivity(intent)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        outState?.putParcelable("first", firstAirport)
+        outState?.putParcelable("second", secondAirport)
+        super.onSaveInstanceState(outState)
     }
 
     private fun fillAirportsViews() {

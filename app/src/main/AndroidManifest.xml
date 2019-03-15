@@ -16,9 +16,11 @@
                 android:name="com.google.android.geo.API_KEY"
                 android:value="AIzaSyDZ7oJyb0AiH07dWZerCxdNkkazcU_EUlk"/>
 
-        <activity android:name=".SearchFlightsActivity">
+        <activity android:name=".SearchFlightsActivity"
+        >
         </activity>
-        <activity android:name=".SearchDestinationActivity">
+        <activity android:name=".SearchDestinationActivity"
+                  android:windowSoftInputMode="stateVisible">
         </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
