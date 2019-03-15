@@ -97,7 +97,6 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         polyline?.pattern = Arrays.asList(Dot(), Gap(20f));
 
         polyline?.jointType = JointType.DEFAULT
-
     }
 
     private fun getRoute2(): ArrayList<RouteItem> {
@@ -105,7 +104,6 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
 
         val startLatLang = firstAirport.latLng
         val endLatLang = secondAirport.latLng
-
 
         val length = Math.sqrt(
             Math.pow(
@@ -120,16 +118,16 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
         latStep = latStep / dist
         lonStep = lonStep / dist
 
-        Log.d("plane_fr", "start: "+startLatLang+" end: "+endLatLang)
-        Log.d("plane_fr", "dist: "+dist)
+        Log.d("plane_fr", "start: " + startLatLang + " end: " + endLatLang)
+        Log.d("plane_fr", "dist: " + dist)
 
 
         list.add(RouteItem(startLatLang, 0.0))
-        for (i in 0..dist){
-            var lat = startLatLang.latitude+ latStep*i + 3*sin((2*i* PI)/dist)
-            var lon = startLatLang.longitude + lonStep*i -3*sin((2*i* PI)/dist)
+        for (i in 0..dist) {
+            var lat = startLatLang.latitude + latStep * i + 3 * sin((2 * i * PI) / dist)
+            var lon = startLatLang.longitude + lonStep * i - 3 * sin((2 * i * PI) / dist)
 
-            Log.d("plane_fr", "lat: "+lat+" lon: "+lon)
+            Log.d("plane_fr", "i: " + i + " lat: " + lat + " lon: " + lon)
 
             if (latStep < 0 && lat < endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
             if (latStep > 0 && lat > endLatLang.latitude && lonStep < 0 && lon < endLatLang.longitude) break
@@ -141,50 +139,8 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
 
         for (i in 1 until list.size - 2) {
             val pathItem = list[i]
-            pathItem.angle = (getAngleDegrees(list[i - 1].latLng, list[i + 1].latLng))
-        }
-        return list
-    }
-
-    private fun getRoute(): ArrayList<RouteItem> {
-        val list = java.util.ArrayList<RouteItem>()
-
-        val startLatLang = firstAirport.latLng
-        val endLatLang = secondAirport.latLng
-
-        val length = Math.sqrt(
-            Math.pow(
-                startLatLang.latitude - endLatLang.latitude, 2.0
-            ) + Math.pow(startLatLang.longitude - endLatLang.longitude, 2.0)
-        )
-        // val angle = 0.0
-
-        val angle = getAngle(startLatLang, endLatLang)
-
-        val sin = Math.sin(angle)
-        val cos = Math.cos(angle)
-
-        list.add(RouteItem(startLatLang, 0.0))
-        run {
-            var i = 0.0
-            while (i < length) {
-                val x = if (startLatLang.longitude - endLatLang.longitude > 0) i * -1 else i
-
-                val latitude = (4 * Math.sin(x * 2.0 * Math.PI / length))
-
-                val newLat = (x * sin + latitude * cos + startLatLang.latitude)
-                val newLon = (x * cos + latitude * sin + startLatLang.longitude)
-
-                val latLng = LatLng(newLat, newLon)
-                list.add(RouteItem(latLng, 0.0))
-                i += STEP
-            }
-        }
-        // list.add(new PathItem(endLatLang,0));
-
-        for (i in 1 until list.size - 2) {
-            val pathItem = list[i]
-            pathItem.angle = (getAngleDegrees(list[i - 1].latLng, list[i + 1].latLng))
+            pathItem.angle = (getAngleDegrees(list[i].latLng, list[i+1].latLng))
+            Log.d("plane_fr", "i: " + i + " angle: " + pathItem.angle)
         }
         return list
     }
@@ -195,6 +151,7 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
                 .position(path[0].latLng)
                 .rotation(path[0].angle.toFloat())
                 .anchor(0.7f, 0.5f)
+                .zIndex(10f)
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_plane))
         )
 
@@ -217,10 +174,14 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun getAngleDegrees(startLatLang: LatLng, endLatLang: LatLng): Double {
+
+        Log.d("plane_fr", "start: " + startLatLang + " end: " + endLatLang)
+
         if (startLatLang.longitude > endLatLang.longitude)
-            return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1 + 180
+            return Math.atan2(startLatLang.latitude - endLatLang.latitude, startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI) * -1 + 180
+          //  return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1 + 180
         else
-            return ((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI)) * -1
+            return Math.atan2(startLatLang.latitude - endLatLang.latitude, startLatLang.longitude - endLatLang.longitude) * (180 / Math.PI) * -1
         // return (float) Math.tan(((startLatLang.latitude - endLatLang.latitude) / (startLatLang.longitude - endLatLang.longitude))/(Math.PI*180));
     }
 
