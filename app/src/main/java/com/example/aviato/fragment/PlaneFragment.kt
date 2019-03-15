@@ -161,6 +161,7 @@ class PlaneFragment : Fragment(), OnMapReadyCallback {
                 plane?.rotation = path[planePosition].angle.toFloat()
                 if (planePosition < path.size - 3)
                     handler.postDelayed(this, PLANE_SPEED.toLong())
+                else plane?.remove()
             }
         }, PLANE_SPEED.toLong())
     }
